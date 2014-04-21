@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  <script type="text/javascript">
+  var ws = new WebSocket("ws://localhost:8081/");
+
+  var drawFlag = false;
+  var oldX = 0;
+  var oldY = 0;
+
+  window.addEventListener("load", function(){
+    var canvas = document.getElementById("dCanvas");
+    canvas.addEventListener("mousemove", draw, true);
+    canvas.addEventListener("mousedown", function(){
+      drawFlag = true;
+      oldX = e.clientX;
+      oldY = e.clientY; }, false);
+    canvas.addEventListener("mouseup", function(){drawFlag = false;}, false);
+  }, true);
+
+  function draw(e){
+    if(!drawFlag) return;
+    var x = e.clientX;
+    var y = e.clientY;
+    var canvas = document.getElementById("dCanvas");
+    var context = canvas.getContext("2d");
+    context.strokeStyle = "rgba(0,0,0,1)";
+    context.lineWidth= 1;
+    context.beginPath();
+    context.moveTo(oldX, oldY);
+    context.lineTo(x,y);
+    context.stroke();
+    context.closePath();
+
+    ws.send(JSON.stringify({"oldX" :oldX, "oldY" :oldY, "x" :x, "y" :y}));
+
+    oldX = x;
+    oldY = y;
+  }
+
+  ws.onmessage = function (event) {
+    var data = JSON.parse(event.data);
+
+    var canvas = document.getElementById("dCanvas");
+    var context = canvas.getContext("2d");
+    context.strokeStyle = "rgba(0,0,0,1)";
+    context.lineWidth= 1;
+    context.beginPath();
+    context.moveTo(data["oldX"], data["oldY"]);
+    context.lineTo(data["x"],data["y"]);
+    context.stroke();
+    context.closePath();
+    
+  }
+
+  function disconnect() {
+    ws.close();
+    ws = null;
+  }
+
+  function output(str) {
+    document.getElementById("log").innerHTML += str + "<hr />";
+  }
+  </script>
+</head>
+<body>
+<p>Dyn</p>
+<canvas id="dCanvas" width="640" height="480">
+CANVAS
+</canvas>
+</body>
+</html>
