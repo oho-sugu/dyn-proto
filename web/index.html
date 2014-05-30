@@ -12,33 +12,36 @@
 
   window.addEventListener("load", function(){
     var canvas = document.getElementById("dCanvas");
-    canvas.addEventListener("mousemove", draw, true);
-    canvas.addEventListener("mousedown", function(){
+    var rect = canvas.getBoundingClientRect();
+    canvas.addEventListener("mousemove", 
+      function(e){
+        if(!drawFlag) return;
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+        var canvas = document.getElementById("dCanvas");
+        var context = canvas.getContext("2d");
+        context.strokeStyle = "rgba(0,0,0,1)";
+        context.lineWidth= 1;
+        context.beginPath();
+        context.moveTo(oldX, oldY);
+        context.lineTo(x,y);
+        context.stroke();
+        context.closePath();
+
+        ws.send(JSON.stringify({"oldX" :oldX, "oldY" :oldY, "x" :x, "y" :y}));
+
+        oldX = x;
+        oldY = y;
+      }, true);
+    canvas.addEventListener("mousedown", function(e){
       drawFlag = true;
-      oldX = e.clientX;
-      oldY = e.clientY; }, false);
+      oldX = e.clientX - rect.left;
+      oldY = e.clientY - rect.top;
+    }, false);
     canvas.addEventListener("mouseup", function(){drawFlag = false;}, false);
+    canvas.addEventListener("mouseout", function(){drawFlag = false;}, false);
   }, true);
 
-  function draw(e){
-    if(!drawFlag) return;
-    var x = e.clientX;
-    var y = e.clientY;
-    var canvas = document.getElementById("dCanvas");
-    var context = canvas.getContext("2d");
-    context.strokeStyle = "rgba(0,0,0,1)";
-    context.lineWidth= 1;
-    context.beginPath();
-    context.moveTo(oldX, oldY);
-    context.lineTo(x,y);
-    context.stroke();
-    context.closePath();
-
-    ws.send(JSON.stringify({"oldX" :oldX, "oldY" :oldY, "x" :x, "y" :y}));
-
-    oldX = x;
-    oldY = y;
-  }
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
